@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MMCH API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.3/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.3/favicon-16x16.png" sizes="16x16" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #fafafa;
+        }
+        .swagger-ui .topbar {
+            background-color: #1b1b1b;
+        }
+        .swagger-ui .topbar .download-url-wrapper {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js" charset="UTF-8"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+    <script>
+        window.onload = function() {
+            try {
+                const ui = SwaggerUIBundle({
+                    url: window.location.origin + '/api-docs/swagger.json',
+                    dom_id: '#swagger-ui',
+                    deepLinking: true,
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIStandalonePreset
+                    ],
+                    plugins: [
+                        SwaggerUIBundle.plugins.DownloadUrl
+                    ],
+                    layout: "StandaloneLayout",
+                    validatorUrl: null,
+                    tryItOutEnabled: true,
+                    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                    onComplete: function() {
+                        console.log('Swagger UI loaded successfully');
+                    },
+                    onFailure: function(err) {
+                        console.error('Swagger UI failed to load:', err);
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing Swagger UI:', error);
+                document.getElementById('swagger-ui').innerHTML = 
+                    '<div style="padding: 20px; text-align: center;">' +
+                    '<h2>API Documentation</h2>' +
+                    '<p>Unable to load Swagger UI. Please check the console for errors.</p>' +
+                    '<p><a href="/api-docs/swagger.json">View API JSON</a></p>' +
+                    '</div>';
+            }
+        };
+    </script>
+</body>
+</html>

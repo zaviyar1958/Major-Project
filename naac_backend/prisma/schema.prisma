@@ -1,0 +1,216 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String?
+  email        String   @unique
+  password     String
+  role         String   @default("user") // "admin", "department", "section", "faculty"
+  departmentId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model School {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // e.g. "School of Computer Science & IT"
+  code        String       @unique // e.g. "SCSIT"
+  deanName    String?
+  deanEmail   String?
+  departments Department[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("schools")
+}
+
+model Department {
+  id         Int                    @id @default(autoincrement())
+  name       String                 @unique // e.g. "Computer Science"
+  code       String                 @unique // e.g. "CS"
+  schoolId   Int
+  school     School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  hodName    String?
+  email      String                 @unique // Login email for HOD
+  yearlyData           DepartmentYearlyData[]
+  faculties            Faculty[]
+  programs             Program[]
+  courses              Course[]
+  criterionSubmissions CriterionSubmission[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@map("departments")
+}
+
+model Section {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique // e.g. "Examination Branch", "Academic Section", "IQAC Cell"
+  code         String   @unique // e.g. "EXAM", "ACAD", "IQAC"
+  type         String   @default("Academic")
+  schoolName   String?
+  inchargeName String?
+  email        String   @unique // Login email or username
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sections")
+}
+
+model Faculty {
+  id              Int         @id @default(autoincrement())
+  name            String
+  email           String      @unique
+  departmentName  String?
+  departmentId    Int?
+  department      Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  designation     String
+  qualification   String
+  experienceYears Int         @default(0)
+  researchCount   Int         @default(0)
+  status          String      @default("Active")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("faculties")
+}
+
+model DepartmentYearlyData {
+  id             Int        @id @default(autoincrement())
+  departmentId   Int
+  department     Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  academicYear   String     // "2024-25", "2025-26", "2026-27", "2027-28"
+  studentCount   Int        @default(0)
+  totalCourses   Int        @default(0)
+  revisedCourses Int        @default(0)
+  awardsCount    Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([departmentId, academicYear])
+  @@map("department_yearly_data")
+}
+
+model NaacCriterion {
+  id              Int      @id @default(autoincrement())
+  criterionNumber Int      // 1 to 7
+  title           String
+  description     String
+  weightage       Int      // e.g. 150, 300, 150, 100, 100, 100, 100
+  score           Float    // Percentage score (0 - 100)
+  academicYear    String   @default("2024-25")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("naac_criteria")
+}
+
+model StudentMetric {
+  id            Int      @id @default(autoincrement())
+  academicYear  String   @unique @default("2024-25")
+  totalStudents Int      @default(0)
+  ugCount       Int      @default(0)
+  pgCount       Int      @default(0)
+  phdCount      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("student_metrics")
+}
+
+model Program {
+  id                 Int                 @id @default(autoincrement())
+  name               String              // e.g. "Master of Computer Applications"
+  code               String              // e.g. "MCA"
+  level              String              @default("PG") // "UG", "PG", "PhD", "Diploma"
+  yearOfIntroduction Int?               @default(2020)
+  departmentId       Int
+  department         Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  courses            Course[]
+  enrollments        ProgramEnrollment[]
+  hasFieldProject    Boolean             @default(false)
+  hasResearchProject Boolean             @default(false)
+  hasInternship      Boolean             @default(false)
+  status             String              @default("Active")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@unique([departmentId, code])
+  @@map("programs")
+}
+
+model ProgramEnrollment {
+  id               Int      @id @default(autoincrement())
+  programId        Int
+  program          Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  academicYear     String   // e.g. "2023-24", "2024-25", "2025-26"
+  enrolledStudents Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([programId, academicYear])
+  @@map("program_enrollments")
+}
+
+model Course {
+  id                 Int                    @id @default(autoincrement())
+  name               String                 // e.g. "Data Structures and Algorithms"
+  code               String                 // e.g. "CS201"
+  departmentId       Int
+  department         Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  programId          Int?
+  program            Program?               @relation(fields: [programId], references: [id], onDelete: SetNull)
+  credits            Int                    @default(4)
+  yearOfOffering     Int?                   @default(2024) // Year course was introduced/offered
+  yearOfRevision     Int?                   @default(2024) // Year course was revised
+  isEmployability    Boolean                @default(false)
+  isSkillDev         Boolean                @default(false)
+  isEntrepreneurship Boolean                @default(false)
+  isValueAdded       Boolean                @default(false)
+  isOnlineMOOC       Boolean                @default(false)
+  revisionHistory    CourseRevisionHistory[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@unique([departmentId, code])
+  @@map("courses")
+}
+
+model CourseRevisionHistory {
+  id           Int      @id @default(autoincrement())
+  courseId     Int
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  academicYear String?  // e.g. "2024-25"
+  eventType    String   // "INTRODUCED", "REVISED"
+  revisionYear Int
+  remarks      String?
+  createdAt    DateTime @default(now())
+
+  @@map("course_revision_history")
+}
+
+model CriterionSubmission {
+  id              Int        @id @default(autoincrement())
+  departmentId    Int
+  department      Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  criterionCode   String     // e.g. "1.1.1", "1.1.2"
+  academicYear    String     @default("2024-25")
+  description     String?    @db.Text
+  supportingDoc   Json?      // { name, size, url }
+  additionalFiles Json?      // [ { id, name, size, url } ]
+  isSubmitted     Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@unique([departmentId, criterionCode, academicYear])
+  @@map("criterion_submissions")
+}
